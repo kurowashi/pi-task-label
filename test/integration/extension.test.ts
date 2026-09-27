@@ -189,7 +189,7 @@ test("input generates a label from the session tail and shows it on both surface
 		assert.ok(call, "the model must be called");
 		assert.match(call.text, /Assistant: 次は middleware を直す/);
 		assert.match(call.text, /User: OK/);
-		assert.match(call.text, /User \(今回\): OK/);
+		assert.match(call.text, /User \(current\): OK/);
 		assert.equal(call.options["cacheRetention"], "none");
 		assert.equal(typeof call.options["sessionId"], "string");
 		const context = call.context as { messages?: unknown[] };

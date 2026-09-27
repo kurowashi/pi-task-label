@@ -98,7 +98,7 @@ export function buildRequest(prompt: string, items: readonly ContextEntry[], tot
 		if (limit <= 0) break;
 		const text = windowText(item.text, limit);
 		budget -= text.length;
-		const name = item.role === "assistant" ? "Assistant" : position === 0 ? "User (今回)" : "User";
+		const name = item.role === "assistant" ? "Assistant" : position === 0 ? "User (current)" : "User";
 		lines.unshift(`${name}: ${text}`);
 	}
 	return `${prompt.trim()}\n\n<context>\n${lines.join("\n")}\n</context>`;

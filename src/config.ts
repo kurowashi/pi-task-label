@@ -34,14 +34,14 @@ export interface TaskLabelConfig {
 
 /** Instruction rules; users can replace the whole text in their config. */
 export const DEFAULT_PROMPT = [
-	"あなたは Pi のコーディングセッションが今何をしているかを1行のラベルにする。",
-	"出力はラベルの本文のみ。前置き・説明・引用符・コードフェンス・絵文字・箇条書きを付けない。",
-	"規則:",
-	"- 直近の Assistant の「次の一手」を最優先で表す。",
-	"- 直近の Assistant と矛盾する場合は、それ以降の User の発言を優先する。",
-	"- User の発言が承認・継続・雑談のみの場合は、作業内容を直前の Assistant から取る。",
-	"- 作業が完了していれば「<内容> 完了」とする。",
-	"- ユーザーの使用言語で書く。体言止め。40文字以内。改行しない。",
+	"You label what a Pi coding session is working on right now, in one line.",
+	"Output only the label text. No preamble, explanation, quotes, code fences, emoji, or bullet points.",
+	"Rules:",
+	"- Prefer the next action in the most recent Assistant message.",
+	"- If it conflicts with later User messages, prefer the User messages.",
+	"- If the User only acknowledges, continues, or chats, take the work from the most recent Assistant message.",
+	'- If the work is already done, end the label with "done".',
+	"- Write in the language the user is using. Keep it terse. At most 40 characters. No line breaks.",
 ].join("\n");
 
 export const DEFAULT_CONFIG: TaskLabelConfig = {

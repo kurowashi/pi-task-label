@@ -55,7 +55,7 @@ pi --extension /path/to/pi-task-label/src/index.ts
 | `model` | `""` | ラベル生成に使うモデル（`"<provider>/<id>"`）。空ならそのセッションのモデル |
 | `assistantLookback` | `1` | 遡る assistant メッセージ数（1以上）。ツール実行のみのメッセージは数えない |
 | `display` | `"both"` | 表示先。`"both"` / `"title"` / `"status"` |
-| `prompt` | 同梱 | ラベル生成の指示文。会話末尾は自動で追記される |
+| `prompt` | 同梱 | ラベル生成の指示文（英語）。会話末尾は自動で追記される。ラベルはユーザーの言語で出力される |
 
 条件:
 
@@ -96,7 +96,7 @@ pi --extension /path/to/pi-task-label/src/index.ts
 <context>
 Assistant: 次は middleware を直す
 User: OK
-User (今回): OK
+User (current): OK
 </context>
 ```
 

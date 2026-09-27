@@ -125,7 +125,7 @@ test("buildRequest marks the current input and keeps it first in the budget", ()
 		{ role: "assistant", text: "plan" },
 		{ role: "user", text: "OK" },
 	]);
-	assert.equal(prompt, "DO THE THING\n\n<context>\nAssistant: plan\nUser (今回): OK\n</context>");
+	assert.equal(prompt, "DO THE THING\n\n<context>\nAssistant: plan\nUser (current): OK\n</context>");
 
 	const bounded = buildRequest(
 		"P",
@@ -135,14 +135,14 @@ test("buildRequest marks the current input and keeps it first in the budget", ()
 		],
 		50,
 	);
-	assert.match(bounded, /User \(今回\): current\n<\/context>$/);
+	assert.match(bounded, /User \(current\): current\n<\/context>$/);
 	assert.ok(bounded.includes(`Assistant: ${"A".repeat(42)}…`), "older messages must shrink first");
 	assert.ok(!bounded.includes("A".repeat(43)));
 });
 
 test("buildRequest truncates a single oversized input to the total budget", () => {
 	const request = buildRequest("P", [{ role: "user", text: "x".repeat(MAX_TOTAL_CHARS + 500) }]);
-	assert.ok(request.includes(`User (今回): ${"x".repeat(1_999)}…`));
+	assert.ok(request.includes(`User (current): ${"x".repeat(1_999)}…`));
 	assert.ok(!request.includes("x".repeat(2_000)));
 });
 
