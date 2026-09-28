@@ -120,6 +120,13 @@ test("windowText marks truncation inside the limit", () => {
 	assert.equal(windowText("0123456789", 0), "");
 });
 
+test("windowText counts an emoji as one character and never splits it", () => {
+	assert.equal(windowText("abc🔍def", 5), "abc🔍…");
+	assert.equal(windowText("🔍🔍🔍", 2), "🔍…");
+	const cut = windowText("abc🔍def", 5);
+	assert.ok(!/[\uD800-\uDBFF](?![\uDC00-\uDFFF])/.test(cut), "no lone surrogate");
+});
+
 test("buildRequest marks the current input and keeps it first in the budget", () => {
 	const prompt = buildRequest("DO THE THING", [
 		{ role: "assistant", text: "plan" },
@@ -157,6 +164,15 @@ test("sanitizeLabel keeps one bounded, unquoted line", () => {
 	assert.equal(sanitizeLabel("「」"), "");
 	assert.equal(sanitizeLabel("x".repeat(100)).length, MAX_LABEL_CHARS);
 	assert.ok(sanitizeLabel("x".repeat(100)).endsWith("…"));
+});
+
+test("sanitizeLabel keeps an emoji whole at the limit", () => {
+	const exact = `${"x".repeat(39)}🔍`;
+	assert.equal(sanitizeLabel(exact), exact, "40 code points fit even with an emoji");
+	const cut = sanitizeLabel(`${"x".repeat(38)}🔍yyy`);
+	assert.equal([...cut].length, MAX_LABEL_CHARS);
+	assert.ok(cut.endsWith("…"));
+	assert.ok(cut.includes("🔍"), "the leading emoji survives");
 });
 
 test("titleFor puts the label first and falls back to the project name", () => {

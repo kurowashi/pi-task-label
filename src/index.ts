@@ -79,10 +79,12 @@ export function collectContext(entries: readonly SessionEntry[], lookback: numbe
 	return items;
 }
 
-/** Truncate to at most `max` characters, marking that something was cut. */
+/** Truncate to at most `max` characters, marking that something was cut. Counts
+ * code points, not UTF-16 units, so a cut never lands inside an emoji. */
 export function windowText(text: string, max: number): string {
-	if (text.length <= max) return text;
-	return max > 1 ? `${text.slice(0, max - 1)}…` : text.slice(0, max);
+	const chars = [...text];
+	if (chars.length <= max) return text;
+	return max > 1 ? `${chars.slice(0, max - 1).join("")}…` : chars.slice(0, max).join("");
 }
 
 /**
@@ -126,7 +128,7 @@ export function sanitizeLabel(raw: string): string {
 			break;
 		}
 	}
-	return label.length > MAX_LABEL_CHARS ? `${label.slice(0, MAX_LABEL_CHARS - 1)}…` : label;
+	return windowText(label, MAX_LABEL_CHARS);
 }
 
 /** Title for a session without a label: the project and Pi. */

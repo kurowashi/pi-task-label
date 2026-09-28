@@ -35,8 +35,9 @@ export interface TaskLabelConfig {
 /** Instruction rules; users can replace the whole text in their config. */
 export const DEFAULT_PROMPT = [
 	"You label what a Pi coding session is working on right now, in one line.",
-	"Output only the label text. No preamble, explanation, quotes, code fences, emoji, or bullet points.",
+	"Output only the label text. No preamble, explanation, quotes, code fences, or bullet points.",
 	"Rules:",
+	"- Start with one emoji that fits the work, immediately followed by the summary with no space. No other emoji.",
 	"- Prefer the next action in the most recent Assistant message.",
 	"- If it conflicts with later User messages, prefer the User messages.",
 	"- If the User only acknowledges, continues, or chats, take the work from the most recent Assistant message.",
