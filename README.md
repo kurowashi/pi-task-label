@@ -126,7 +126,13 @@ User (current): OK
 
 ## コマンド
 
-ありません。設定はファイルのみです。
+| コマンド | 動作 |
+|---|---|
+| `/task-label` | セッションが使っている解決済み設定と現在のラベルを表示する |
+| `/task-label status` | `/task-label` と同じ |
+
+- 表示するのはセッション開始時の解決済み設定です。反映タイミングは[設定](#設定)を参照してください。
+- 設定を変更するコマンドはありません。変更は設定ファイルで行います。
 
 ## 開発
 
@@ -137,7 +143,7 @@ npm test             # 全テスト
 ```
 
 `npm run verify` の内訳は `package.json` にある。
-契約テストは `test/contract/`(登録ツールなし・コマンドなし・依存 allowlist・import 境界)と `test/ci/`(npm pack の内容)にあり、`src` を Pi のローダー経由で読み込んで検証する。
+契約テストは `test/contract/`(登録ツールなし・コマンドは `/task-label` のみ・依存 allowlist・import 境界)と `test/ci/`(npm pack の内容)にあり、`src` を Pi のローダー経由で読み込んで検証する。
 カバレッジ閾値は `test/unit/` と `test/integration/` の実行で計測する。
 
 ローカルの git フックは [lefthook](lefthook.yml) が管理する。フックは利便性のためのもので、

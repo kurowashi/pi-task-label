@@ -4,6 +4,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import test from "node:test";
 import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
+import { CONFIG_FILE_NAME } from "../../src/config.ts";
 import taskLabelExtension, { baseTitle, MAX_LABEL_CHARS } from "../../src/index.ts";
 
 type Handler = (event: unknown, ctx: ExtensionContext) => unknown;
@@ -32,11 +33,13 @@ interface HarnessOptions {
 	sessionModel?: FakeModel | null;
 	models?: FakeModel[];
 	authed?: boolean;
+	trusted?: boolean;
 	respond?: (text: string, model: FakeModel) => Promise<Reply>;
 }
 
 interface Harness {
 	emit(event: string, data: unknown): Promise<void>;
+	command(name: string, args: string): Promise<void>;
 	ctx: ExtensionContext;
 	statuses: (string | undefined)[];
 	titles: string[];
@@ -70,6 +73,7 @@ function assistantReply(reply: Reply): unknown {
 
 function harness(cwd: string, options: HarnessOptions = {}): Harness {
 	const handlers = new Map<string, Handler[]>();
+	const commands = new Map<string, (args: string, ctx: ExtensionContext) => unknown>();
 	const statuses: (string | undefined)[] = [];
 	const titles: string[] = [];
 	const notifications: string[] = [];
@@ -92,7 +96,7 @@ function harness(cwd: string, options: HarnessOptions = {}): Harness {
 	const ctx = {
 		cwd,
 		hasUI: options.hasUI ?? true,
-		isProjectTrusted: () => true,
+		isProjectTrusted: () => options.trusted ?? true,
 		model: sessionModel,
 		modelRegistry: registry,
 		sessionManager: { getBranch: () => branch },
@@ -116,6 +120,9 @@ function harness(cwd: string, options: HarnessOptions = {}): Harness {
 			handlers.set(event, list);
 			return () => {};
 		},
+		registerCommand(name: string, command: { handler: (args: string, ctx: ExtensionContext) => unknown }) {
+			commands.set(name, command.handler);
+		},
 	} as unknown as ExtensionAPI;
 
 	taskLabelExtension(api);
@@ -129,6 +136,11 @@ function harness(cwd: string, options: HarnessOptions = {}): Harness {
 		branch,
 		async emit(event: string, data: unknown) {
 			for (const handler of handlers.get(event) ?? []) await handler(data, ctx);
+		},
+		async command(name: string, args: string) {
+			const handler = commands.get(name);
+			assert.ok(handler, `command ${name} must be registered`);
+			await handler(args, ctx);
 		},
 	};
 }
@@ -416,6 +428,38 @@ test("the label is sanitized and bounded before it is shown", async () => {
 		await start(h);
 		await input(h, "work");
 		assert.equal(h.statuses.at(-1)?.length, MAX_LABEL_CHARS);
+	});
+});
+
+test("the settings command reports the resolved configuration and the current label", async () => {
+	await withProject({ enabled: true, model: "prov/cheap", assistantLookback: 2, display: "status" }, async (cwd) => {
+		const h = harness(cwd);
+		await start(h);
+		await h.command("task-label", "");
+		const report = h.notifications.at(-1) ?? "";
+		assert.match(report, /^pi-task-label: on$/m);
+		assert.match(report, /^display: status$/m);
+		assert.match(report, /^model: prov\/cheap$/m);
+		assert.match(report, /^assistantLookback: 2$/m);
+		assert.match(report, /^prompt: default \(\d+ chars\)$/m);
+		assert.match(report, /^label: \(none\)$/m);
+		assert.ok(report.includes(path.join(cwd, ".pi", CONFIG_FILE_NAME)), "the project config path must be shown");
+
+		await input(h, "work");
+		await h.command("task-label", "status");
+		assert.match(h.notifications.at(-1) ?? "", /^label: 生成されたラベル$/m);
+	});
+});
+
+test("the settings command rejects unknown actions and marks an untrusted project", async () => {
+	await withProject({ enabled: true }, async (cwd) => {
+		const h = harness(cwd, { trusted: false });
+		await start(h);
+		await h.command("task-label", "set");
+		assert.match(h.notifications.at(-1) ?? "", /^usage: \/task-label/);
+
+		await h.command("task-label", "status");
+		assert.match(h.notifications.at(-1) ?? "", /warning: .*project is not trusted/);
 	});
 });
 

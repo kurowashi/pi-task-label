@@ -19,7 +19,7 @@
 import { randomUUID } from "node:crypto";
 import * as path from "node:path";
 import type { ExtensionAPI, ExtensionContext, SessionEntry } from "@earendil-works/pi-coding-agent";
-import { DEFAULT_CONFIG, loadConfig, type TaskLabelConfig } from "./config.ts";
+import { DEFAULT_CONFIG, globalConfigPath, loadConfig, projectConfigPath, type TaskLabelConfig } from "./config.ts";
 
 /** Characters kept per message in the request. */
 export const MAX_MESSAGE_CHARS = 2_000;
@@ -141,6 +141,25 @@ export function titleFor(label: string, cwd: string): string {
 	return label.length > 0 ? `π - ${label} - ${path.basename(cwd)}` : baseTitle(cwd);
 }
 
+/** The /task-label report: the session's resolved settings, label, and load warnings. */
+export function statusReport(
+	config: TaskLabelConfig,
+	label: string | undefined,
+	warnings: readonly string[],
+	ctx: ExtensionContext,
+): string {
+	return [
+		`pi-task-label: ${config.enabled ? "on" : "off"}`,
+		`display: ${config.display}`,
+		`model: ${config.model.length > 0 ? config.model : "session model"}`,
+		`assistantLookback: ${config.assistantLookback}`,
+		`prompt: ${config.prompt === DEFAULT_CONFIG.prompt ? "default" : "custom"} (${config.prompt.length} chars)`,
+		`label: ${label ?? "(none)"}`,
+		`config: ${globalConfigPath()} | ${projectConfigPath(ctx.cwd)}`,
+		...warnings.map((warning) => `warning: ${warning}`),
+	].join("\n");
+}
+
 type SessionModel = NonNullable<ExtensionContext["model"]>;
 
 /** Message-only half of an unknown thrown value. */
@@ -169,6 +188,7 @@ function chooseModel(ctx: ExtensionContext, configured: string): ModelChoice {
 
 export default function taskLabelExtension(pi: ExtensionAPI): void {
 	let config: TaskLabelConfig = DEFAULT_CONFIG;
+	let loadWarnings: string[] = [];
 	let warned = new Set<string>();
 	let announced = false;
 	let label: string | undefined;
@@ -258,6 +278,7 @@ export default function taskLabelExtension(pi: ExtensionAPI): void {
 	pi.on("session_start", (_event, ctx) => {
 		const loaded = loadConfig(ctx.cwd, ctx.isProjectTrusted());
 		config = loaded.config;
+		loadWarnings = loaded.warnings;
 		warned = new Set<string>();
 		requestErrorWarned = false;
 		generation += 1;
@@ -275,5 +296,17 @@ export default function taskLabelExtension(pi: ExtensionAPI): void {
 
 	pi.on("input", (event, ctx) => {
 		void generate(event.text, ctx);
+	});
+
+	pi.registerCommand("task-label", {
+		description: "Show the resolved pi-task-label settings",
+		handler: async (args, ctx) => {
+			const action = args.trim().toLowerCase();
+			if (action !== "" && action !== "status") {
+				ctx.ui.notify("usage: /task-label [status]", "warning");
+				return;
+			}
+			ctx.ui.notify(statusReport(config, label, loadWarnings, ctx), "info");
+		},
 	});
 }

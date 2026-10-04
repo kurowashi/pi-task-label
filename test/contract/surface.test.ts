@@ -2,9 +2,9 @@
  * Contract: the model-facing surface stays empty, and the documented events exist.
  *
  * pi-task-label is a display extension. A registered tool would be re-sent to
- * the model on every request for the rest of the session, and a command would
- * add user surface the README does not promise. The only model interaction is
- * the label request itself, which is sent outside the session transcript.
+ * the model on every request for the rest of the session, so the only command
+ * is the read-only settings view. The only model interaction is the label
+ * request itself, which is sent outside the session transcript.
  *
  * The extension is loaded through Pi's own loader (jiti), the same path Pi
  * uses at runtime, so these assertions cover the shipped artifact rather than
@@ -22,6 +22,7 @@ import { PACKAGE_ROOT } from "../helpers/root.ts";
 
 /** The behaviors the README documents, one registration each. */
 const EXPECTED_EVENTS = ["input", "session_start", "session_tree"];
+const EXPECTED_COMMANDS = ["task-label"];
 
 async function loadTaskLabelExtension(): Promise<Extension> {
 	const sandbox = mkdtempSync(join(tmpdir(), "pi-task-label-surface-"));
@@ -42,9 +43,13 @@ test("no tools are registered", async () => {
 	assert.deepEqual([...extension.tools.keys()], [], "a tool would tax every request; the label is display only");
 });
 
-test("no commands are registered", async () => {
+test("only the read-only settings command is registered", async () => {
 	const extension = await loadTaskLabelExtension();
-	assert.deepEqual([...extension.commands.keys()], [], "configuration is files only; the README promises no commands");
+	assert.deepEqual(
+		[...extension.commands.keys()],
+		EXPECTED_COMMANDS,
+		"settings changes stay in files; the only command is the settings view",
+	);
 });
 
 test("every documented event has exactly one handler", async () => {

@@ -21,7 +21,7 @@
 | 制約 | 検証 | 定義・実装箇所 |
 |---|---|---|
 | モデル向けのツールを登録しない(表示専用) | `test/contract/surface.test.ts` | `src/index.ts` |
-| コマンドを登録しない(設定はファイルのみ) | `test/contract/surface.test.ts` | `test/contract/surface.test.ts` の期待値 |
+| コマンドは `task-label` の1つで、解決済み設定とラベルの表示に限る | `test/contract/surface.test.ts` | `test/contract/surface.test.ts` の `EXPECTED_COMMANDS`、`src/index.ts` |
 | イベントは `input` / `session_start` / `session_tree` の3種で、各1ハンドラ | `test/contract/surface.test.ts` | `test/contract/surface.test.ts` の `EXPECTED_EVENTS`、`src/index.ts` |
 
 ### スキャンと生成
@@ -103,7 +103,7 @@
 
 ## 変更時の手順
 
-- イベントやコマンドを増減する場合は `test/contract/surface.test.ts` の `EXPECTED_EVENTS` と期待値を先に更新する。
+- イベントやコマンドを増減する場合は `test/contract/surface.test.ts` の `EXPECTED_EVENTS` / `EXPECTED_COMMANDS` と期待値を先に更新する。
   1つ落とすと機能が静かに消えるため、契約が変更の入口になる。
 - スキャン・予算・ラベルの意味を変える場合は `test/unit/context.test.ts` を先に更新し、
   セマンティクスを固定してから実装する。
