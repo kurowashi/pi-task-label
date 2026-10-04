@@ -17,7 +17,7 @@ import * as path from "node:path";
 export const CONFIG_FILE_NAME = "task-label.json";
 
 /** Where the label is shown. */
-export type DisplayTarget = "both" | "title" | "status";
+type DisplayTarget = "both" | "title" | "status";
 
 export interface TaskLabelConfig {
 	/** Master switch. When false no model call and no display happens. */
@@ -60,7 +60,7 @@ export interface LoadedTaskLabelConfig {
 	projectFile: string;
 }
 
-export function agentDir(): string {
+function agentDir(): string {
 	const override = process.env["PI_CODING_AGENT_DIR"]?.trim();
 	return override && override.length > 0 ? override : path.join(os.homedir(), ".pi", "agent");
 }
